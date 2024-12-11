@@ -1,0 +1,52 @@
+@startuml
+actor User as U
+entity "Sensor (I2C)" as I2C
+entity "LCD (SPI)" as LCD
+entity "Button (GPIO)" as GPIO
+entity "RGB LED (FTM)" as LED
+
+participant "Main Function" as Main
+participant "Sensor Sampling Thread" as SST
+participant "LCD Update Thread" as LDT
+participant "Button Input Thread" as BIT
+participant "Gesture Detection Thread" as GDT
+participant "Terminal Logging Thread" as TLT
+participant "LED Control Thread" as LCT
+
+activate Main
+
+Main -> SST: Start Sensor Sampling Thread\n(K_THREAD_DEFINE)
+activate SST
+return
+deactivate SST
+
+Main -> LDT: Start LCD Update Thread\n(K_THREAD_DEFINE)
+activate LDT
+return
+deactivate LDT
+
+Main -> BIT: Start Button Input Thread\n(K_THREAD_DEFINE)
+activate BIT
+return
+deactivate BIT
+
+Main -> GDT: Start Gesture Detection Thread\n(K_THREAD_DEFINE)
+activate GDT
+return
+deactivate GDT
+
+Main -> TLT: Start Terminal Logging Thread\n(K_THREAD_DEFINE)
+activate TLT
+return
+deactivate TLT
+
+Main -> LCT: Start LED Control Thread\n(K_THREAD_DEFINE)
+activate LCT
+return
+deactivate LCT
+
+Main -> Main: Initialize shared data\n(shared_data_init)
+
+deactivate Main
+
+@enduml

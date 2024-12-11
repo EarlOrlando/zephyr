@@ -1,0 +1,58 @@
+@startuml
+actor User as U
+entity "Sensor (I2C)" as I2C
+entity "LCD (SPI)" as LCD
+entity "Button (GPIO)" as GPIO
+entity "RGB LED (FTM)" as LED
+
+participant "Sensor Sampling Thread" as SST
+participant "LCD Update Thread" as LDT
+participant "Button Input Thread" as BIT
+participant "Gesture Detection Thread" as GDT
+participant "Terminal Logging Thread" as TLT
+participant "LED Control Thread" as LCT
+
+activate LCT
+LCT -> LED: Initialize PWM-based RGB LED control\n(pwm_is_ready_dt)
+activate LED
+return
+deactivate LED
+
+alt PWM not ready
+    LCT -> LCT: Log error\n(printk)
+end
+
+loop LED Control Loop
+    LCT -> GDT: Wait for gesture events\n(k_event_wait: gesture_event)
+
+    alt SHAKE_EVENT detected
+        LCT -> LCT: Update random RGB values\n(rand)
+        LCT -> LCT: Log "Shake detected!"\n(printk)
+    end
+
+    alt TILT_EVENT detected
+        LCT -> LCT: Update brightness\n((brightness + 10) % 100)
+        LCT -> LCT: Log "Tilt detected!"\n(printk)
+    end
+
+    alt FLIP_EVENT detected
+        LCT -> LCT: Toggle LED on/off
+        LCT -> LCT: Log "Flip detected!"\n(printk)
+    end
+
+    LCT -> LED: Set RGB LED\n(pwm_set_pulse_dt)
+    activate LED
+    return
+    deactivate LED
+
+    alt PWM write failure
+        LCT -> LCT: Log error\n(printk)
+    end
+
+    LCT -> GDT: Clear event flags\n(k_event_set: gesture_event)
+
+    LCT -> LCT: Sleep\n(k_msleep)
+end
+deactivate LCT
+
+@enduml

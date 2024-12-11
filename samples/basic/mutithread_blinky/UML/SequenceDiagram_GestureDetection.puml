@@ -1,0 +1,41 @@
+@startuml
+actor User as U
+entity "Sensor (I2C)" as I2C
+entity "LCD (SPI)" as LCD
+entity "Button (GPIO)" as GPIO
+entity "RGB LED (FTM)" as LED
+
+participant "Sensor Sampling Thread" as SST
+participant "LCD Update Thread" as LDT
+participant "Button Input Thread" as BIT
+participant "Gesture Detection Thread" as GDT
+participant "Terminal Logging Thread" as TLT
+participant "LED Control Thread" as LCT
+
+activate GDT
+loop Gesture Detection Loop
+    GDT -> SST: Wait for data availability\n(k_sem_take: data_ready_sem)
+
+    GDT -> SST: Lock mutex\n(k_mutex_lock: data_mutex)
+    GDT -> GDT: Read accelerometer data (x, y, z)
+    GDT -> SST: Unlock mutex\n(k_mutex_unlock: data_mutex)
+
+    GDT -> GDT: Calculate magnitude\n(sqrtf(x^2 + y^2 + z^2))
+
+    alt Magnitude > SHAKE_THRESHOLD
+        GDT -> GDT: Post shake event\n(k_event_post: gesture_event -> SHAKE_EVENT)
+    end
+
+    alt fabsf(x) > TILT_THRESHOLD || fabsf(y) > TILT_THRESHOLD
+        GDT -> GDT: Post tilt event\n(k_event_post: gesture_event -> TILT_EVENT)
+    end
+
+    alt z < FLIP_THRESHOLD
+        GDT -> GDT: Post flip event\n(k_event_post: gesture_event -> FLIP_EVENT)
+    end
+
+    GDT -> GDT: Sleep\n(k_msleep)
+end
+deactivate GDT
+
+@enduml

@@ -1,0 +1,37 @@
+# FRDM-K66F board
+
+# Copyright (c) 2016, Freescale Semiconductor, Inc.
+# SPDX-License-Identifier: Apache-2.0
+# https://github.com/dragonlock2/zephyrboards/blob/main/boards/arm/k66f_breakout/Kconfig.defconfig
+
+if BOARD_FRDM_K66F
+
+config OSC_XTAL0_FREQ
+	default 12000000
+
+config MCG_PRDIV0
+	default 0x0
+
+config MCG_VDIV0
+	default 0x4 # 0xe for 180MHz
+
+config MCG_FCRDIV
+	default 1
+
+config UART_MCUX
+	default y
+	depends on SERIAL
+
+config I2C_MCUX
+	default y
+	depends on I2C
+
+config CAN_MCUX_FLEXCAN
+	default y
+	depends on CAN
+
+config USB_KINETIS
+	default y
+	depends on USB_DEVICE_DRIVER
+
+endif # BOARD_FRDM_K66F

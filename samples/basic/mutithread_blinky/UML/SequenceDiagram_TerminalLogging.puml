@@ -1,0 +1,26 @@
+@startuml
+actor User as U
+entity "Sensor (I2C)" as I2C
+entity "LCD (SPI)" as LCD
+entity "Button (GPIO)" as GPIO
+entity "RGB LED (FTM)" as LED
+
+participant "Sensor Sampling Thread" as SST
+participant "LCD Update Thread" as LDT
+participant "Button Input Thread" as BIT
+participant "Gesture Detection Thread" as GDT
+participant "Terminal Logging Thread" as TLT
+participant "LED Control Thread" as LCT
+
+activate TLT
+loop Terminal Logging Loop
+    TLT -> SST: Wait for data from message queue\n(k_msgq_get: sensor_msgq)
+    alt Data received successfully
+        TLT -> TLT: Log sensor data\n(printk: accel/magn data)
+    end
+
+    TLT -> TLT: Sleep\n(k_msleep)
+end
+deactivate TLT
+
+@enduml

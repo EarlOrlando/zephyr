@@ -1,0 +1,55 @@
+@startuml
+actor User as U
+entity "I2C Bus" as I2C
+entity "LCD (SPI)" as LCD
+entity "GPIO" as GPIO
+entity "RGB LED" as LED
+
+participant "Sensor Sampling Thread" as SST
+participant "LCD Update Thread" as LDT
+participant "Button Input Thread" as BIT
+participant "Gesture Detection Thread" as GDT
+participant "Terminal Logging Thread" as TLT
+participant "LED Control Thread" as LCT
+
+' User interaction
+U -> BIT : Button Press
+BIT -> GDT : Update Mode (Atomic Variable)
+BIT -> LDT : Signal Mode Change
+
+' Sensor Sampling
+SST -> I2C : Fetch Sensor Data
+SST -> TLT : Enqueue Sensor Data (Message Queue)
+SST -> GDT : Signal Data Ready (Semaphore)
+
+' LCD Update
+LDT -> LCD : Render Visualization (SPI)
+LDT -> GDT : Query Mode (Atomic Variable)
+
+' Gesture Detection
+GDT -> LED : Post Gesture Events (Event)
+GDT -> LCT : Signal Gesture Event
+
+' Terminal Logging
+TLT -> U : Log Sensor Data
+TLT -> LCD : Provide Contextual Data (Shared Memory)
+
+' LED Control
+LCT -> LED : Adjust LED Display (PWM)
+
+' Synchronization Mechanisms
+note right of SST
+- Semaphore for data readiness
+- Message queue for sensor data
+end note
+
+note right of GDT
+- Atomic variable for mode updates
+- Event signaling for gestures
+end note
+
+note right of LDT
+- SPI for LCD control
+- Shared memory for contextual data
+end note
+@enduml

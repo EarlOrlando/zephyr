@@ -1,0 +1,30 @@
+identifier: frdm_k66f
+name: NXP FRDM-K66F
+type: mcu
+arch: arm
+ram: 256
+flash: 2048
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+supported:
+  - adc
+  - arduino_gpio
+  - arduino_i2c
+  - arduino_serial
+  - arduino_spi
+  - can
+  - counter
+  - dac
+  - dma
+  - gpio
+  - i2c
+  - netif:eth
+  - nvs
+  - pwm
+  - spi
+  - usb_device
+  - usbd
+  - watchdog
+vendor: nxp

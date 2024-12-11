@@ -1,0 +1,56 @@
+@startuml
+actor User as U
+entity "Sensor (I2C)" as I2C
+entity "LCD (SPI)" as LCD
+entity "Button (GPIO)" as GPIO
+entity "RGB LED (FTM)" as LED
+
+participant "Sensor Sampling Thread" as SST
+participant "LCD Update Thread" as LDT
+participant "Button Input Thread" as BIT
+participant "Gesture Detection Thread" as GDT
+participant "Terminal Logging Thread" as TLT
+participant "LED Control Thread" as LCT
+
+activate SST
+SST -> I2C: Initialize device (DEVICE_DT_GET_ONE)
+activate I2C
+return
+deactivate I2C
+
+alt Device not ready
+    SST -> SST: Log error\n(printk)
+end
+
+loop Sampling Loop
+    SST -> I2C: Fetch data\n(sensor_sample_fetch)
+    activate I2C
+    return
+    deactivate I2C
+
+    alt Fetch failed
+        SST -> SST: Log error\n(printk)
+    end
+
+    SST -> I2C: Get channels\n(sensor_channel_get)
+    activate I2C
+    return
+    deactivate I2C
+
+    SST -> GDT: Lock mutex\n(k_mutex_lock: data_mutex)
+    SST -> LCT:
+    SST -> SST: Update accelerometer data (x, y, z)
+    SST -> SST: Update magnetometer data (x, y, z)
+    SST -> SST: Update temperature data
+    SST -> GDT: Unlock mutex\n(k_mutex_lock: data_mutex)
+    SST -> LCT:
+
+    SST -> GDT: Signal data availability\n(k_sem_give: data_ready_sem)
+
+    SST -> TLT: Enqueue sensor data\n(k_msgq_put: sensor_msgq)
+
+    SST -> SST: Sleep\n(k_msleep)
+end
+deactivate SST
+
+@enduml

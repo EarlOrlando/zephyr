@@ -1,0 +1,86 @@
+@startuml
+actor User as U
+entity "Sensor (I2C)" as I2C
+entity "LCD (SPI)" as LCD
+entity "Button (GPIO)" as GPIO
+entity "RGB LED (FTM)" as LED
+
+participant "GPIO ISR Context" as ISR
+participant "Sensor Sampling Thread" as SST
+participant "LCD Update Thread" as LDT
+participant "Button Input Thread" as BIT
+participant "Gesture Detection Thread" as GDT
+participant "Terminal Logging Thread" as TLT
+participant "LED Control Thread" as LCT
+
+activate BIT
+BIT -> GPIO: Check device readiness\n(device_is_ready)
+activate GPIO
+return
+deactivate GPIO
+
+alt Device not ready
+    BIT -> BIT: Log error\n(printk)
+end
+
+BIT -> GPIO: Configure button pin\n(gpio_pin_configure_dt)
+activate GPIO
+return
+deactivate GPIO
+
+alt Configuration failed
+    BIT -> BIT: Log error\n(printk)
+end
+
+BIT -> GPIO: Configure interrupt\n(gpio_pin_interrupt_configure_dt)
+activate GPIO
+return
+deactivate GPIO
+
+alt Configuration failed
+    BIT -> BIT: Log error\n(printk)
+end
+
+BIT -> GPIO: Initialize callback\n(gpio_init_callback)
+activate GPIO
+return
+deactivate GPIO
+
+BIT -> GPIO: Add callback\n(gpio_add_callback)
+activate GPIO
+return
+deactivate GPIO
+
+BIT -> BIT: Log success\n(printk)
+
+loop Keep thread alive
+    BIT -> BIT: Sleep\n(k_msleep)
+end
+deactivate BIT
+
+== Button Interrupt Service Routine ==
+U -> GPIO: Press button
+GPIO -> ISR: Trigger ISR (button_pressed)
+activate ISR
+
+ISR -> ISR: Reschedule debounce work\n(k_work_reschedule)
+ISR -> LDT: Log reschedule\n(printk)
+return
+deactivate ISR
+
+== Debounce Work ==
+ISR -> GPIO: Check button state\n(gpio_pin_get_dt)
+activate ISR
+
+activate GPIO
+return
+deactivate GPIO
+
+alt Button is pressed
+    ISR -> LDT: Read mode atomically\n(atomic_get)
+    ISR -> LDT: Update mode\n(atomic_set)
+    ISR -> ISR: Log new mode\n(printk)
+end
+deactivate ISR
+
+@enduml

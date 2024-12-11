@@ -1,0 +1,120 @@
+@startuml
+actor User as U
+entity "Sensor (I2C)" as I2C
+entity "LCD (SPI)" as LCD
+entity "Button (GPIO)" as GPIO
+entity "RGB LED (FTM)" as LED
+
+participant "Sensor Sampling Thread" as SST
+participant "LCD Update Thread" as LDT
+participant "Button Input Thread" as BIT
+participant "Gesture Detection Thread" as GDT
+participant "Terminal Logging Thread" as TLT
+participant "LED Control Thread" as LCT
+
+activate LDT
+LDT -> LCD: Initialize LCD
+activate LCD
+return
+deactivate LCD
+
+loop LCD Update Loop
+    LDT -> BIT: Read current mode\n(atomic_get: mode)
+
+    alt SplashScreen Mode
+        LDT -> LCD: Clear and display splash screen
+        activate LCD
+        return
+        deactivate LCD
+        LDT -> LDT: Wait for mode change\n(k_msleep)
+    end
+
+    alt AccData Mode
+        LDT -> SST: Lock mutex\n(k_mutex_lock: data_mutex)
+        LDT -> LDT: Read accelerometer and temperature data
+        LDT -> SST: Unlock mutex\n(k_mutex_unlock: data_mutex)
+        LDT -> LCD: Display numeric acceleration and temperature data
+        activate LCD
+        return
+        deactivate LCD
+    end
+
+    alt MagData Mode
+        LDT -> SST: Lock mutex\n(k_mutex_lock: data_mutex)
+        LDT -> LDT: Read magnetometer and temperature data
+        LDT -> SST: Unlock mutex\n(k_mutex_unlock: data_mutex)
+        LDT -> LCD: Display numeric magnetometer and temperature data
+        activate LCD
+        return
+        deactivate LCD
+    end
+
+    alt AccPlot Mode
+        LDT -> SST: Lock mutex\n(k_mutex_lock: data_mutex)
+        LDT -> LDT: Read acceleration data buffers
+        LDT -> SST: Unlock mutex\n(k_mutex_unlock: data_mutex)
+        LDT -> LCD: Display graphical acceleration data
+        activate LCD
+        return
+        deactivate LCD
+    end
+
+    alt MagPlot Mode
+        LDT -> SST: Lock mutex\n(k_mutex_lock: data_mutex)
+        LDT -> LDT: Read magnetometer data buffers
+        LDT -> SST: Unlock mutex\n(k_mutex_unlock: data_mutex)
+        LDT -> LCD: Display graphical magnetometer data
+        activate LCD
+        return
+        deactivate LCD
+    end
+
+    alt Compass Mode
+        LDT -> SST: Lock mutex\n(k_mutex_lock: data_mutex)
+        LDT -> LDT: Read magnetometer data
+        LDT -> SST: Unlock mutex\n(k_mutex_unlock: data_mutex)
+        LDT -> LDT: Calculate heading
+        LDT -> LCD: Draw compass
+        activate LCD
+        return
+        deactivate LCD
+    end
+
+    alt LevelBubble Mode
+        LDT -> SST: Lock mutex\n(k_mutex_lock: data_mutex)
+        LDT -> LDT: Read accelerometer data
+        LDT -> SST: Unlock mutex\n(k_mutex_unlock: data_mutex)
+        LDT -> LDT: Calculate pitch and roll
+        LDT -> LCD: Draw level bubble
+        activate LCD
+        return
+        deactivate LCD
+    end
+
+    alt TiltIndicator Mode
+        LDT -> SST: Lock mutex\n(k_mutex_lock: data_mutex)
+        LDT -> LDT: Read accelerometer data
+        LDT -> SST: Unlock mutex\n(k_mutex_unlock: data_mutex)
+        LDT -> LDT: Calculate pitch and roll
+        LDT -> LCD: Draw inclinometer
+        activate LCD
+        return
+        deactivate LCD
+    end
+
+    alt SnakeGame Mode
+        LDT -> LDT: Start snake game
+    end
+
+    alt Invalid Mode
+        LDT -> LCD: Clear display and show error
+        activate LCD
+        return
+        deactivate LCD
+    end
+
+    LDT -> LDT: Sleep\n(k_msleep)
+end
+deactivate LDT
+
+@enduml

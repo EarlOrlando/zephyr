@@ -1,0 +1,46 @@
+@startuml
+actor User as U
+entity "Sensor (I2C)" as I2C
+entity "LCD (SPI)" as LCD
+entity "Button (GPIO)" as GPIO
+entity "RGB LED (FTM)" as LED
+
+participant "Sensor Sampling Thread" as SST
+participant "LCD Update Thread" as LDT
+participant "Button Input Thread" as BIT
+participant "Gesture Detection Thread" as GDT
+participant "Terminal Logging Thread" as TLT
+participant "LED Control Thread" as LCT
+
+activate LDT
+LDT -> LDT: Initialize game state\n(init_game)
+LDT -> LDT: Place food\n(place_food)
+
+loop Game Loop
+    LDT -> SST: Lock mutex\n(k_mutex_lock: data_mutex)
+    LDT -> LDT: Read accelerometer data
+    LDT -> SST: Unlock mutex\n(k_mutex_unlock: data_mutex)
+
+    LDT -> LDT: Update direction\n(update_direction)
+
+    LDT -> LDT: Update game state\n(update_game)
+    alt Collision detected
+        LDT -> LDT: Set game over\n(game_over = true)
+    end
+
+    LDT -> LCD: Render game on LCD\n(render_game)
+    activate LCD
+    return
+    deactivate LCD
+
+    LDT -> LDT: Adjust sleep time based on score\n(k_msleep)
+
+    alt Mode changed OR Game over
+        LDT -> LDT: Exit game loop
+    end
+end
+
+LDT -> LDT: Display score and game over or exit\n(clear and write)
+
+deactivate LDT
+@enduml

@@ -1,0 +1,14 @@
+&spi0 {
+    status = "okay";
+    pinctrl-0 = <&spi0_default>;
+    pinctrl-names = "default";
+    lcd5110: lcd5110@0 {
+        compatible = "nokia,lcd-5110";
+        reg = <0>; // Use hardware CS0
+        spi-max-frequency = <500000>;
+        dc-gpios = <&gpiob 19 GPIO_ACTIVE_HIGH>; // Data/Command pin
+        reset-gpios = <&gpiob 18 GPIO_ACTIVE_HIGH>; // Reset pin
+        backlight-gpios = <&gpioa 6 GPIO_ACTIVE_HIGH>; // Backlight
+        label = "LCD_5110";
+    };
+};

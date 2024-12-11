@@ -1,0 +1,14 @@
+@startuml
+
+rectangle "/" as root
+rectangle "pwmleds" as pwmleds
+rectangle "green_pwm_led" as green
+rectangle "red_pwm_led" as red
+rectangle "blue_pwm_led" as blue
+
+root --> pwmleds : " "
+pwmleds --> green : " "
+pwmleds --> red : " "
+pwmleds --> blue : " "
+
+@enduml

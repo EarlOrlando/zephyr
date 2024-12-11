@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Binding for Nokia 5110 LCD display using the PCD8544 controller.
+
+compatible: "nokia,lcd-5110"
+
+include:
+  - spi-device.yaml
+
+properties:
+  dc-gpios:
+    type: phandle-array
+    required: true
+    description: Data/Command control GPIO pin.
+
+  reset-gpios:
+    type: phandle-array
+    required: true
+    description: Reset GPIO pin.
+
+  backlight-gpios:
+    type: phandle-array
+    required: false
+    description: Backlight pin.
+
+  label:
+    type: string
+    required: false
+    description: Device label.
